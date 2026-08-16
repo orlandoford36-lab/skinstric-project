@@ -8,11 +8,29 @@ import { BottomNav } from "@/components/skinstric/BottomNav";
 export default function Select() {
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
 
   const startAnalysis = () => {
     setLoading(true);
     setTimeout(() => navigate("/analysis"), 1800);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const dataUrl = String(reader.result || "");
+        localStorage.setItem("skinstric_image", dataUrl);
+      } catch (err) {
+        console.error("Failed to save image:", err);
+      }
+      // show loading state and go to analysis
+      startAnalysis();
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -36,7 +54,7 @@ export default function Select() {
             <div className="flex flex-col items-center gap-14 md:flex-row md:gap-28">
               {/* Camera */}
               <button
-                onClick={startAnalysis}
+                onClick={() => cameraRef.current?.click()}
                 className="group relative grid h-64 w-64 place-items-center md:h-72 md:w-72"
               >
                 <RotatingDiamonds
@@ -52,6 +70,14 @@ export default function Select() {
                   </span>
                 </span>
               </button>
+              <input
+                ref={cameraRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileChange}
+              />
 
               {/* Gallery */}
               <button
@@ -75,7 +101,7 @@ export default function Select() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={() => startAnalysis()}
+                  onChange={handleFileChange}
                 />
               </button>
             </div>
@@ -86,7 +112,18 @@ export default function Select() {
       {!loading && (
         <BottomNav
           back={{ label: "BACK", onClick: () => navigate("/testing") }}
-          next={{ label: "PROCEED", onClick: startAnalysis }}
+          next={{
+            label: "PROCEED",
+            onClick: () => {
+              // if an image was uploaded (or captured) proceed, otherwise prompt to choose
+              if (localStorage.getItem("skinstric_image")) {
+                startAnalysis();
+              } else {
+                // open gallery picker by default
+                fileRef.current?.click();
+              }
+            },
+          }}
         />
       )}
     </div>
