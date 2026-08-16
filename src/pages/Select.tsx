@@ -23,15 +23,21 @@ export default function Select() {
     reader.onload = () => {
       try {
         const dataUrl = String(reader.result || "");
+        // Save image to localStorage and keep it in component state
         localStorage.setItem("skinstric_image", dataUrl);
+        setSelectedImage(dataUrl);
       } catch (err) {
         console.error("Failed to save image:", err);
       }
-      // show loading state and go to analysis
-      startAnalysis();
+      // do not auto-navigate here — wait for user to confirm via Proceed
     };
     reader.readAsDataURL(file);
   };
+
+  // keep currently-selected image so user can confirm before proceeding
+  const [selectedImage, setSelectedImage] = useState<string | null>(
+    typeof window !== "undefined" ? localStorage.getItem("skinstric_image") : null
+  );
 
   return (
     <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-background">
@@ -105,6 +111,33 @@ export default function Select() {
                 />
               </button>
             </div>
+                {selectedImage && (
+                  <div className="mt-8 flex flex-col items-center gap-4">
+                    <div className="w-[min(80vw,420px)] border rounded overflow-hidden">
+                      <img src={selectedImage} alt="Selected" className="w-full object-contain" />
+                    </div>
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => {
+                          // allow re-taking/choose another
+                          localStorage.removeItem("skinstric_image");
+                          setSelectedImage(null);
+                          // open camera again
+                          cameraRef.current?.click();
+                        }}
+                        className="rounded-sm border px-4 py-2 font-mono text-xs"
+                      >
+                        RETAKE
+                      </button>
+                      <button
+                        onClick={() => fileRef.current?.click()}
+                        className="rounded-sm bg-foreground px-4 py-2 font-mono text-xs text-background"
+                      >
+                        CHOOSE ANOTHER
+                      </button>
+                    </div>
+                  </div>
+                )}
           </>
         )}
       </main>
@@ -112,18 +145,18 @@ export default function Select() {
       {!loading && (
         <BottomNav
           back={{ label: "BACK", onClick: () => navigate("/testing") }}
-          next={{
-            label: "PROCEED",
-            onClick: () => {
-              // if an image was uploaded (or captured) proceed, otherwise prompt to choose
-              if (localStorage.getItem("skinstric_image")) {
-                startAnalysis();
-              } else {
-                // open gallery picker by default
-                fileRef.current?.click();
-              }
-            },
-          }}
+              next={{
+                label: "PROCEED",
+                onClick: () => {
+                  // require a selected image (in state) before proceeding
+                  if (selectedImage) {
+                    startAnalysis();
+                  } else {
+                    // open gallery picker by default
+                    fileRef.current?.click();
+                  }
+                },
+              }}
         />
       )}
     </div>
