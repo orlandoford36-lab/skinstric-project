@@ -8,7 +8,6 @@ import { BottomNav } from "@/components/skinstric/BottomNav";
 export default function Select() {
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
 
   const startAnalysis = () => {
@@ -60,7 +59,7 @@ export default function Select() {
             <div className="flex flex-col items-center gap-14 md:flex-row md:gap-28">
               {/* Camera */}
               <button
-                onClick={() => cameraRef.current?.click()}
+                onClick={() => navigate("/camera")}
                 className="group relative grid h-64 w-64 place-items-center md:h-72 md:w-72"
               >
                 <RotatingDiamonds
@@ -76,14 +75,7 @@ export default function Select() {
                   </span>
                 </span>
               </button>
-              <input
-                ref={cameraRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileChange}
-              />
+              {/* camera input removed — using dedicated /camera route for real camera capture */}
 
               {/* Gallery */}
               <button
@@ -122,8 +114,8 @@ export default function Select() {
                           // allow re-taking/choose another
                           localStorage.removeItem("skinstric_image");
                           setSelectedImage(null);
-                          // open camera again
-                          cameraRef.current?.click();
+                          // open dedicated camera page
+                          navigate("/camera");
                         }}
                         className="rounded-sm border px-4 py-2 font-mono text-xs"
                       >
