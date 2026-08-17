@@ -28,6 +28,29 @@ export default function UploadPage() {
   const [base64Image, setBase64Image] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // If a camera capture saved a dataURL to localStorage, load it into preview
+  useEffect(() => {
+    try {
+      const dataUrl = localStorage.getItem("upload_base64");
+      const filename = localStorage.getItem("upload_filename") || "";
+
+      if (dataUrl) {
+        setPreviewUrl(dataUrl);
+
+        // strip data: prefix to keep the same shape as fileToBase64's base64
+        const base64 = dataUrl.split(",")[1] || "";
+        setBase64Image(base64);
+        setFileName(filename || "camera-capture.png");
+        setStage("preview");
+
+        localStorage.removeItem("upload_base64");
+        localStorage.removeItem("upload_filename");
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     const previewContent = previewContentRef.current;
     const analyzingContent = analyzingContentRef.current;
